@@ -160,6 +160,8 @@ def list_recordings(email):
 
 
 def download_recording(download_url, email, filename, foldername):
+    invalid_chars = re.compile(r'[\\/*?:"<>|]')
+    foldername=invalid_chars.sub("_",foldername)
     dl_dir = os.sep.join([DOWNLOAD_DIRECTORY, foldername])
     invalid_chars = re.compile(r'[\\/*?:"<>|]')
     filename=str(uuid.uuid1())+'.'+filename.split('.')[-1]
