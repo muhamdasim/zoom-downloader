@@ -27,6 +27,8 @@ import requests
 import time
 import sys
 import os
+import re
+import uuid
 APP_VERSION = "2.1"
 
 # JWT_TOKEN now lives in appenv.py
@@ -104,6 +106,7 @@ def format_filename(recording, file_type, file_extension, recording_type, record
     topic = recording['topic'].replace('/', '&')
     rec_type = recording_type.replace("_", " ").title()
     meeting_time = parse(recording['start_time']).strftime('%Y.%m.%d - %I.%M %p UTC')
+
     return '{} - {} - {}.{}'.format(
         meeting_time, topic+" - "+rec_type, recording_id, file_extension.lower()),'{} - {}'.format(topic, meeting_time)
 
@@ -158,10 +161,11 @@ def list_recordings(email):
 
 def download_recording(download_url, email, filename, foldername):
     dl_dir = os.sep.join([DOWNLOAD_DIRECTORY, foldername])
+    invalid_chars = re.compile(r'[\\/*?:"<>|]')
+    filename=str(uuid.uuid1())+'.'+filename.split('.')[-1]
     full_filename = os.sep.join([dl_dir, filename])
     os.makedirs(dl_dir, exist_ok=True)
     response = requests.get(download_url, stream=True)
-
     # total size in bytes.
     total_size = int(response.headers.get('content-length', 0))
     block_size = 32 * 1024  # 32 Kibibytes
@@ -256,7 +260,7 @@ def main():
             for file_type, file_extension, download_url, recording_type, recording_id in downloads:
                 if recording_type != 'incomplete':
                     filename, foldername = format_filename(
-                        recording, file_type, file_extension, recording_type, recording_id)
+                        recording,file_type, file_extension, recording_type, recording_id)
                     # truncate URL to 64 characters
                     truncated_url = download_url[0:64] + "..."
                     print("==> Downloading ({} of {}) as {}: {}: {}".format(
